@@ -6,14 +6,17 @@ run() ->
 
 run(true) ->
       {ok, [Command]} = io:fread("Enter a command: ","~s"),
-      CommandName = commandName(Command),   
       FileName = fileName(Command),
       {ok, File} = file:open(FileName,[read, {encoding, unicode}]),
-      CountLine = choose_LineCount(FileName),
+      CountLine = choose_RowsCount(FileName),
       RowsList = read_line(File, CountLine),
       file: close(File),
       Pattern = choose_Pattern(FileName),
       startParse(RowsList, Pattern).
+
+fileName(Str) ->
+    Pos = string: str(Str, "("),
+    FileName = string: substr(Str, Pos + 2, string: length(Str) - Pos - 3).
 
 choose_Pattern(FileName) ->
     FileFormat = string: find(FileName, "."),
@@ -25,7 +28,7 @@ choose_Pattern(FileName) ->
         true -> []
     end.
 
-choose_LineCount(FileName) ->
+choose_RowsCount(FileName) ->
     FileFormat = string: find(FileName, "."),
     if 
         FileFormat == ".tsv" ->
@@ -45,20 +48,16 @@ read_line(File, Num) ->
             [Row2 | read_line(File, Num - 1)]
     end.
 
-commandName(Str) ->
-    Pos = string: str(Str, "("),
-    CommandName = string: substr(Str, 1, Pos - 1).
-
-fileName(Str) ->
-    Pos = string: str(Str, "("),
-    FileName = string: substr(Str, Pos + 2, string: length(Str) - Pos - 3).
-
 startParse(RowsList, Pattern) ->
     Row = hd(RowsList),
     Str = re: split(Row, Pattern, [{return,list}]),
     ColNum = number_of_columns(Str,0),
     ColumnLength = trunc(143 / ColNum),
     parse(RowsList, ColNum, ColumnLength, Pattern).
+
+number_of_columns([], Num) -> Num;
+number_of_columns(List, Num) ->
+    number_of_columns(tl(List), Num + 1).
 
 parse([],ColNum, ColumnLength, Pattern) -> io:format("");
 parse(RowsList, ColNum, ColumnLength, Pattern)->
@@ -67,12 +66,8 @@ parse(RowsList, ColNum, ColumnLength, Pattern)->
     consoleOutput(Str, ColumnLength, ColNum, ColNum, Pattern),
     parse(tl(RowsList), ColNum, ColumnLength, Pattern).
 
-number_of_columns([], Num) -> Num;
-number_of_columns(List, Num) ->
-    number_of_columns(tl(List), Num + 1).
-
-consoleOutput(Str, ColumnLength, 1,ColNumC, Pattern) ->
-    Column = 143 - ColNumC * ColumnLength,
+consoleOutput(Str, ColumnLength, 1, ColNumAll, Pattern) ->
+    Column = 143 - ColNumAll * ColumnLength,
     if 
         Pattern == "\t" ->
             Str1 = Str;
@@ -80,10 +75,10 @@ consoleOutput(Str, ColumnLength, 1,ColNumC, Pattern) ->
             Str1 = string: substr(unicode: characters_to_list(Str), 1, ColumnLength + Column)
     end,
     io:fwrite([Str1]);
-consoleOutput(Str, ColumnLength, ColNum, ColNumC, Pattern) -> 
+consoleOutput(Str, ColumnLength, ColNum, ColNumAll, Pattern) -> 
     OutputPattern = "~-" ++ integer_to_list(ColumnLength) ++ "ts|",
     io:fwrite(OutputPattern, [hd(Str)]),
-    consoleOutput(tl(Str), ColumnLength,ColNum - 1,ColNumC, Pattern).
+    consoleOutput(tl(Str), ColumnLength,ColNum - 1,ColNumAll, Pattern).
 
 
 
