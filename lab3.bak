@@ -32,19 +32,19 @@
   (when (> (string-length filename) 4)
     (set! file-format (substring filename (- (string-length filename) 4))))
    (if(equal? command-syntax #t)
-      (if(or (string-ci=? file-format ".csv") (string-ci=? file-format ".tsv"))
+      (if(string-ci=? file-format ".txt")
          (cond
-           [(string-ci=? filename "map_zal-skl9.csv")
-            (define csv-file (file->string "map_zal-skl9.csv"))
+           [(string-ci=? filename "mps-declarations_rada.txt")
+            (define csv-file (file->string "mps-declarations_rada.txt"))
             (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "mp-posts_full.csv")
-            (define csv-file (file->string "mp-posts_full.csv"))
+           [(string-ci=? filename "mp-posts_full.txt")
+            (define csv-file (file->string "mp-posts_full.txt"))
             (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "mps-declarations_rada.csv")
-            (define csv-file (file->string "mps-declarations_rada.csv"))
+           [(string-ci=? filename "map_zal-skl9.txt")
+            (define csv-file (file->string "map_zal-skl9.txt"))
             (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "plenary_register_mps-skl9.tsv")
-            (define csv-file (file->string "plenary_register_mps-skl9.tsv"))
+           [(string-ci=? filename "plenary_register_mps-skl9.txt")
+            (define csv-file (file->string "plenary_register_mps-skl9.txt"))
             (display (all-rows (open-input-string csv-file)))])
          (writeln "Невірно введено формат файлу. Будь ласка, спробуйте ще.")
          )
