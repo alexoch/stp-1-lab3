@@ -33,19 +33,7 @@
     (set! file-format (substring filename (- (string-length filename) 4))))
    (if(equal? command-syntax #t)
       (if(or (string-ci=? file-format ".csv") (string-ci=? file-format ".tsv"))
-         (cond
-           [(string-ci=? filename "map_zal-skl9.csv")
-            (define csv-file (file->string "map_zal-skl9.csv"))
-            (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "mp-posts_full.csv")
-            (define csv-file (file->string "mp-posts_full.csv"))
-            (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "mps-declarations_rada.csv")
-            (define csv-file (file->string "mps-declarations_rada.csv"))
-            (display (all-rows (open-input-string csv-file)))]
-           [(string-ci=? filename "plenary_register_mps-skl9.tsv")
-            (define csv-file (file->string "plenary_register_mps-skl9.tsv"))
-            (display (all-rows (open-input-string csv-file)))])
+            (display (all-rows (open-input-string (file->string filename))))
          (writeln "Невірно введено формат файлу. Будь ласка, спробуйте ще.")
          )
       (writeln "Невірно введено команду. Будь ласка, спробуйте ще.")
