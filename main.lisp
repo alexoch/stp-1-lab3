@@ -24,9 +24,9 @@
 
 (defun recognize_file (TableData)
 	(cond
-		((expansion OurPath "tsv") (recognize_file_separator TableData "|"))
-		((expansion OurPath "csv") (recognize_file_separator TableData ","))
-		(t (error "Not correct file extension. Pls correct the mistake. File path: ~S" OurPath))))
+		((expansion OurName "tsv") (recognize_file_separator TableData "|"))
+		((expansion OurName "csv") (recognize_file_separator TableData ","))
+		(t (error "Not correct file extension. Pls correct the mistake. File path: ~S" OurName))))
 
 
 (defun recognize_file_separator (TableData separator)
@@ -78,7 +78,7 @@
 
 
 
-	;; start
+	
 	(setq query (read-line))	
 	
 	(setq command (command_analysis query))
