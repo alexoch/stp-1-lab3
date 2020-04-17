@@ -44,11 +44,12 @@
 
 (defn are-rows-same [row1 row2] (are-rows-cols-same (shorter-list row1 row2) (longer-list row1 row2)))
 
-(defn is-distinct [row lists]
-  (= (count (filter #(are-rows-same % row) lists)) 1))
+(defn is-distinct [row row-index lists]
+  (let [same-rows (filter #(are-rows-same % row) lists)]
+    (or (= (count same-rows) 1) (= (.indexOf lists (nth same-rows 0)) row-index))))
 
 (defn filter-distinct [lists]
-  (println "filtering...") (filter #(is-distinct % lists) lists))
+  (println "filtering...") (remove nil? (map-indexed #(if (is-distinct %2 % lists) %2 nil) lists)))
 
 (defn command-exists [line]
   (or (= line "exit")
