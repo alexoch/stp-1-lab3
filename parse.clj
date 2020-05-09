@@ -64,8 +64,11 @@
       {:operator "and" :conditions (map get-conditions-step (split-by-and words))}
       (parse-single-condition words))))
 
-(defn get-conditions [words]
+(defn get-where-conditions [words]
   (get-conditions-step (subvec words (inc (.indexOf words "where")))))
+
+(defn get-having-conditions [words]
+  (get-conditions-step (subvec words (inc (.indexOf words "having")))))
 
 ; --- Join
 
@@ -129,24 +132,29 @@
            :options {:cols (get-query-cols words)}
            :queries (parse-line (subvec words (.indexOf words "from")))}
 
-          (if (in? words "group")
-            {:command "group"
-             :options {:cols (get-group-cols words)}
-             :queries (parse-line (subvec words 0 (.indexOf words "group")))}
-            ; todo
+          (if (in? words "having")
+            {:command "having"
+             :options (get-having-conditions words)
+             :queries (parse-line (subvec words 0 (.indexOf words "having")))}
 
-            (if (in? words "where")
-              {:command "where"
-               :options (get-conditions words)
-               :queries (parse-line (subvec words 0 (.indexOf words "where")))}
+            (if (in? words "group")
+              {:command "group"
+               :options {:cols (get-group-cols words)}
+               :queries (parse-line (subvec words 0 (.indexOf words "group")))}
+              ; todo
 
-              (if (in? words "join")
-                (let [type (get-join-type words)]
-                  {:command "join"
-                   :options {:type type :on (get-join-on words)}
-                   :queries [(parse-line (get-left-table words type)) (parse-line (get-right-table words))]})
+              (if (in? words "where")
+                {:command "where"
+                 :options (get-where-conditions words)
+                 :queries (parse-line (subvec words 0 (.indexOf words "where")))}
 
-                {:command "get"
-                 :from    (if (> (count words) 0)
-                            (if (in? words "from") (nth words (inc (.indexOf words "from"))) (first words))
-                            nil)}))))))))
+                (if (in? words "join")
+                  (let [type (get-join-type words)]
+                    {:command "join"
+                     :options {:type type :on (get-join-on words)}
+                     :queries [(parse-line (get-left-table words type)) (parse-line (get-right-table words))]})
+
+                  {:command "get"
+                   :from    (if (> (count words) 0)
+                              (if (in? words "from") (nth words (inc (.indexOf words "from"))) (first words))
+                              nil)})))))))))

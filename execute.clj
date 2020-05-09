@@ -120,7 +120,7 @@
      :head      cols
      :isGrouped false
      :body      (if isGrouped
-                  (reduce into (concat (map #(get-col-results % options) body)))
+                  (flatten-once (concat (map #(get-col-results % options) body)))
                   (get-col-results body options))}))
 
 ; --- Union
@@ -142,6 +142,23 @@
    :head head
    :body (distinct body)})
 
+; --- Having
+
+(defn group-having? [head body {val :value col :col}]
+  (if(contains-col-func? col)
+    (let [func     (get-col-func col)
+          index    (.indexOf head (get-colname col))
+          func-res (apply-col-func body {:col-index index :func func})]
+      (is-between func-res val))))
+
+(defn filter-having [{name :name head :head body :body isGrouped :isGrouped groupedBy :groupedBy}
+                     options]
+  {:name      name
+   :head      head
+   :isGrouped true
+   :groupedBy groupedBy
+   :body      (filter #(group-having? head % options) body)})
+
 ; --- Group
 
 (defn group-func [indexes]
@@ -158,13 +175,6 @@
 
 ; --- Where
 
-(defn is-between [val range]
-  (if
-    (= val "null")
-    false
-    (let [int-val  (Integer. val)]
-      (and (>= int-val (first range)) (<= int-val (nth range 1))))))
-
 (declare filter-where)
 
 (defn map-and-where [and-where table]
@@ -177,7 +187,8 @@
   {:name (get table :name)
    :head (get table :head)
    :body (set
-          (reduce into (map #(get (filter-where table %) :body) (get or-where :conditions))))})
+          (flatten-once
+           (map #(get (filter-where table %) :body) (get or-where :conditions))))})
 
 (defn execute-filter [condition {name :name head :head body :body}]
   (let [col-index (.indexOf head (get condition :col))
@@ -210,6 +221,7 @@
         "select"   select-cols
         "union"    get-union
         "distinct" filter-distinct
+        "having"   filter-having
         "group"    group-table
         "where"    filter-where
         "join"     join-tables))
