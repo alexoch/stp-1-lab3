@@ -2,6 +2,15 @@
  '[clojure.java.io :as io]
  '[clojure.string :as str])
 
+(defn is-between [val range]
+  (if
+    (= val "null")
+    false
+    (let [int-val  (Integer. val)]
+      (and (>= int-val (first range)) (<= int-val (last range))))))
+
+(defn flatten-once [vec] (reduce into vec))
+
 (defn trim-comma [str]
   (if (.endsWith str ",") (.substring str 0 (dec (count str))) str))
 
