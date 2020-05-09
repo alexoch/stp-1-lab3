@@ -1,5 +1,4 @@
 (require
- '[clojure.java.io :as io]
  '[clojure.string :as str]
  '[clojure.set :as set])
 
@@ -7,7 +6,7 @@
 (load-file "join.clj")
 
 ; Table format:
-; { name: string, head: list, body: list[] | list[][], isGrouped?: boolean }
+; { name: string, head: list, body: list[] | list[][], isGrouped?: boolean, groupedBy?: colname[] }
 
 (defn table [old-table & body]
   {:name      (get old-table :name)
@@ -42,56 +41,87 @@
 (defn contains-col-func? [col]
   (str/includes? col "("))
 
-(defn get-col-func [word]
+(defn get-col-func-name [word]
   (subs word 0 (.indexOf word "(")))
 
-(defn get-col [word] (subs word (inc (.indexOf word "(")) (.indexOf word ")")))
+(defn get-colname [word]
+  (subs word (inc (.indexOf word "(")) (.indexOf word ")")))
 
 (defn average [numbers]
   (float (/ (reduce + numbers) (count numbers))))
 
 (defn get-col-numeric [col]
-  (map #(Integer. (first %)) col))
+  (map #(Integer. %) col))
 
 (defn get-avg [col] (str (average (get-col-numeric col))))
 (defn get-max [col] (str (reduce max (get-col-numeric col))))
 (defn get-count [col] (str (count col)))
 
-(defn apply-col-func [rows func-col]
-  (let [func      (get-col-func func-col)
-        col-name  (get-col func-col)
-        col-index (get-col-index col-name rows)
-        col       (filter #(nth % col-index) (rest rows))]
+(defn get-col-func [func-col]
+  (let [func      (get-col-func-name func-col)]
     (case func
-          "count"   (get-count col)
-          "avg"     (get-avg col)
-          "max"     (get-max col)
+          "count"   get-count
+          "avg"     get-avg
+          "max"     get-max
           "default" (println "Col function is not supported"))))
+
+(defn apply-col-func [body {index :col-index func :func}]
+  (func (map #(nth % index) body)))
 
 (defn get-row-col [row index]
   (if (< (count row) (inc index)) nil (nth row index)))
 
-(defn get-cols-from-row [row indexes func-indexes func-res]
+(defn get-cols-from-row [row indexes func-indexes funcs-res]
   (map-indexed
    #(if (in? func-indexes %)
-     (nth func-res (.indexOf func-indexes %))
+     (nth funcs-res (.indexOf func-indexes %))
      (get-row-col row %2))
    indexes))
 
 (defn get-func-cols-indexes [cols]
   (keep-indexed #(if (contains-col-func? %2) %) cols))
 
-(defn select-cols [{name :name head :head body :body} options]
-  (let [cols             (get options :cols)
-        func-col-indexes (get-func-cols-indexes cols)
-        indexes          (map #(.indexOf head %) cols)
-        funcs-res        (map #(apply-col-func body %) cols)]
-    {:name name
-     :head cols
-     :body (if (= (count func-col-indexes) (count cols))
-             ; if all are col funcs, return one row
-             [funcs-res]
-             (map #(get-cols-from-row % indexes func-col-indexes funcs-res) body))}))
+(defn get-col-funcs [head cols func-col-indexes]
+  (map
+   #(let [col (nth cols %)]
+     {:func      (get-col-func col)
+      :col-index (.indexOf head (get-colname col))})
+   func-col-indexes))
+
+(defn get-grouped-select [body indexes func-col-indexes funcs-res]
+  [(map-indexed
+    #(if (in? func-col-indexes %)
+      (nth funcs-res (.indexOf func-col-indexes %))
+      (nth (first body) %2))
+    indexes)])
+
+(defn get-col-results [body
+                       {indexes          :cols
+                        func-col-indexes :func-cols
+                        col-funcs        :col-funcs
+                        group-cols       :group-cols}]
+  (let [funcs-res        (map #(apply-col-func body %) col-funcs)]
+    (if (= (+ (count func-col-indexes) (count group-cols)) (count indexes))
+      ; if all cols are either col funcs or group-by-cols, return one row
+      (get-grouped-select body indexes func-col-indexes funcs-res)
+      (map #(get-cols-from-row % indexes func-col-indexes funcs-res) body))))
+
+(defn select-cols [{name :name head :head body :body isGrouped :isGrouped groupedBy :groupedBy}
+                   options]
+  (let [cols              (get options :cols)
+        indexes           (map #(.indexOf head %) cols)
+        func-col-indexes  (get-func-cols-indexes cols) ; indexes of function columns in cols
+        col-funcs         (get-col-funcs head cols func-col-indexes)
+        options           {:cols       indexes
+                           :func-cols  func-col-indexes
+                           :col-funcs  col-funcs
+                           :group-cols groupedBy}]
+    {:name      name
+     :head      cols
+     :isGrouped false
+     :body      (if isGrouped
+                  (reduce into (concat (map #(get-col-results % options) body)))
+                  (get-col-results body options))}))
 
 ; --- Union
 
@@ -111,6 +141,20 @@
   {:name name
    :head head
    :body (distinct body)})
+
+; --- Group
+
+(defn group-func [indexes]
+  (fn [row] (map #(nth row %) indexes)))
+
+(defn group-table [{name :name head :head body :body} {cols :cols}]
+  (let [col-indexes (map #(.indexOf head %) cols)
+        func        (group-func col-indexes)]
+    {:name      name
+     :head      head
+     :body      (vals (group-by func body))
+     :isGrouped true
+     :groupedBy cols}))
 
 ; --- Where
 
@@ -166,6 +210,7 @@
         "select"   select-cols
         "union"    get-union
         "distinct" filter-distinct
+        "group"    group-table
         "where"    filter-where
         "join"     join-tables))
 
