@@ -36,28 +36,27 @@
   (concat (full-join-left-table options)
           (empty-join-right-table options)))
 
-(defn get-join-side [options]
-  (let [rows (get-file-lists (get options :table))]
-    {:rows      rows
-     :col-index (get-col-index (get options :col) rows)}))
+(defn get-join-side [table options]
+  {:rows      (get table :body)
+   :col-index (.indexOf (get table :head) (get options :col))})
 
-(defn get-full-header [rows tname]
-  (map #(str tname "." %) (get-table-head rows)))
+(defn get-full-header [table]
+  (map #(str (get table :name) "." %) (get table :head)))
 
-(defn get-join-header [tables tname1 tname2]
-  (concat (get-full-header (first tables) tname1) (get-full-header (nth tables 1) tname2)))
+(defn get-join-header [tables]
+  (concat (get-full-header (first tables)) (get-full-header (nth tables 1))))
 
 ; options format
 ; on-options format [{:rows :col-index} {:rows :col-index}]
 (defn join-tables [tables options]
   (let [on          (get options :on)
         left        (first on)
-        right       (nth on 1)
-        on-options  [(get-join-side left) (get-join-side right)]
-        header      (get-join-header tables (get left :table) (get right :table))]
-    (concat
-     [header]
-     (rest
-       (case (get options :type)
-             "inner"      (inner-join-tables on-options)
-             "full outer" (full-outer-join-tables on-options))))))
+        right       (last on)
+        on-options  [(get-join-side (first tables) left) (get-join-side (last tables) right)]
+        header      (get-join-header tables)]
+    {:name (get (first tables) :name)
+     :head header
+     :body (rest
+            (case (get options :type)
+                  "inner"      (inner-join-tables on-options)
+                  "full outer" (full-outer-join-tables on-options)))}))

@@ -2,14 +2,8 @@
  '[clojure.java.io :as io]
  '[clojure.string :as str])
 
-(defn get-type [filename] (nth (str/split filename #"\.") 1))
-(defn get-delim [filename] (if (= (get-type filename) "csv") #"," #"\t"))
 (defn trim-comma [str]
   (if (.endsWith str ",") (.substring str 0 (dec (count str))) str))
-
-(defn get-file-lists [filename]
-  (map #(str/split % (get-delim filename))
-       (str/split-lines (slurp (str "files/" filename)))))
 
 (defn get-table-head [lists] (first lists))
 

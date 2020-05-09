@@ -6,8 +6,11 @@
 (defn get-long-value [col]
   (str (subs col 0 (- MAX-VAL-LEN 3)) "..."))
 
-(defn output-by-line [lists]
-  (doseq [list lists]
-    (println
-     (apply str
-            (map #(col-to-str (if (< (count %) MAX-VAL-LEN) % (get-long-value %))) list)))))
+(defn output-row [row]
+  (println
+   (apply str
+          (map #(col-to-str (if (< (count %) MAX-VAL-LEN) % (get-long-value %))) row))))
+
+(defn output-by-line [table]
+  (output-row (get table :head))
+  (doseq [row (get table :body)] (output-row row)))
