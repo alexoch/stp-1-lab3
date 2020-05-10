@@ -1,7 +1,7 @@
 (def MAX-VAL-LEN 25)
 
 (defn col-to-str [col]
-  (str "| " col (apply str (repeat (- MAX-VAL-LEN (count col)) " ")) " "))
+  (str "| " (if (nil? col) "nil" col) (apply str (repeat (- MAX-VAL-LEN (count col)) " ")) " "))
 
 (defn get-long-value [col]
   (str (subs col 0 (- MAX-VAL-LEN 3)) "..."))

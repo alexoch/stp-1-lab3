@@ -26,6 +26,7 @@
 (defn get-words [line] (str/split line #"\s+"))
 
 (defn find-first  [f coll] (first (filter f coll)))
+(defn index-of-first [f coll] (first (keep-indexed #(when (f %2) %) coll)))
 (defn does-match [f coll] (not (nil? (some f coll))))
 
 (defn split-by-indexes [arr indexes]
@@ -36,7 +37,7 @@
                       end   %2]
                  (subvec arr start end))
                indexes)]
-      (concat res [(subvec arr (inc (last indexes)))]))))
+      (filter #(> (count %) 0) (concat res [(subvec arr (inc (last indexes)))])))))
 
 (defn delete-by-index [vec index]
   (into [] (concat (subvec vec 0 index) (subvec vec (inc index)))))
