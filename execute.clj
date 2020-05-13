@@ -81,11 +81,11 @@
 (defn get-cols-from-row [row reducers funcs-res]
   (let [func-col-indexes (indexes-of reducers nil)]
     (map-indexed
-      (fn [i reducer]
-        (if (nil? reducer)
-          (nth funcs-res (.indexOf func-col-indexes i))
-          (reducer row)))
-      reducers)))
+     (fn [i reducer]
+       (if (nil? reducer)
+         (nth funcs-res (.indexOf func-col-indexes i))
+         (reducer row)))
+     reducers)))
 
 (defn get-col-results [body
                        {reducers   :reducers
@@ -119,8 +119,7 @@
                    {cols :cols}]
   (let [options            {:reducers   (get-row-reducers cols head)
                             :col-funcs  (get-col-funcs head cols)
-                            :is-grouped is-grouped}
-        ]
+                            :is-grouped is-grouped}]
     {:name       name
      :head       (map #(get % :name) cols)
      :is-grouped false
@@ -150,7 +149,7 @@
 ; --- Having
 
 (defn group-having? [head body {val :value col :col}]
-  (if(is-col-func? col)
+  (if (is-col-func? col)
     (let [func     (get-col-func col)
           index    (.indexOf head (get col :col))
           func-res (apply-col-func body {:col-index index :func func})]

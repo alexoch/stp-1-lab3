@@ -202,7 +202,6 @@
               {:command "group"
                :options {:cols (get-group-cols words)}
                :queries (parse-line (subvec words 0 (.indexOf words "group")))}
-              ; todo
 
               (if (in? words "where")
                 {:command "where"
