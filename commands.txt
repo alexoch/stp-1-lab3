@@ -1,0 +1,15 @@
+select distinct mp_id, assistant_fullname from test.csv where mp_id between 180 and 182 or mp_id between 180 and 185 or mp_id between 17999 and 19000 order by mp_id desc
+
+select count(mp_id), max(mp_id), avg(mp_id) from assistants.csv
+
+select distinct assistants.csv.mp_id, posts.csv.mp_id, assistants.csv.assistant_fullname, posts.csv.full_name from assistants.csv inner join posts.csv on assistants.csv.mp_id = posts.csv.mp_id where assistants.csv.mp_id between 21052 and 21053
+
+select distinct assistants.csv.mp_id, posts.csv.mp_id, assistants.csv.assistant_fullname, posts.csv.full_name from assistants.csv full outer join posts.csv on assistants.csv.mp_id = posts.csv.mp_id
+
+select date_agenda, id_question, id_event from skl1.tsv where id_event between 4579 and 4580 union select date_agenda, id_question, id_event from skl1.tsv where id_event between 3485 and 3486
+
+select mp_id, count(mp_id), avg(assistant_type_id) from assistants.csv group by mp_id
+
+select mp_id, count(mp_id), avg(assistant_type_id) from assistants.csv group by mp_id having count(mp_id) between 1 and 2
+
+select mp_id, count(mp_id), avg(assistant_type_id), case when mp_id between 21050 and 21050 then 'Condition 1' when mp_id between 21052 and 21052 then 'Condition 2' else 'Else' end as case_col from assistants.csv where mp_id between 21050 and 21057
